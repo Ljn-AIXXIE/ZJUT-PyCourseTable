@@ -1,4 +1,6 @@
 import os
+
+import os
 from PyQt6.QtCore import QSettings
 
 _project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -68,3 +70,7 @@ def encrypt_password(password: str, exponent_hex: str, modulus_hex: str) -> str:
         parts.append(f"{encrypted:x}")
 
     return " ".join(parts)
+
+def check_dir(path: str):
+    if not os.path.exists(path):
+        os.makedirs(path)
