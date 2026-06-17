@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QFrame
 
 from qfluentwidgets import (
     SettingCardGroup,
@@ -16,7 +16,8 @@ class SettingsWidget(QScrollArea):
         self._settings = get_settings()
 
         self.setWidgetResizable(True)
-        self.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.viewport().setStyleSheet("background: transparent;")
 
         container = QWidget()
         container.setStyleSheet("background: transparent;")

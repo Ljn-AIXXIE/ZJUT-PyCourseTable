@@ -14,6 +14,11 @@ def main():
     apply_system_accent_color()
 
     window = MainWindow()
+
+    # TODO: remove after debugging
+    from app.models.test_data import create_test_table
+    window.table_widget.set_table(create_test_table())
+
     window.show()
 
     with qasync.QEventLoop(app) as loop:
