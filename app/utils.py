@@ -1,3 +1,36 @@
+import os
+from PyQt6.QtCore import QSettings
+
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def get_settings() -> QSettings:
+    return QSettings(
+        os.path.join(_project_root, "settings.ini"),
+        QSettings.Format.IniFormat,
+    )
+
+
+def apply_system_accent_color():
+    """Apply the Windows system accent color to Fluent widgets."""
+    try:
+        import winreg
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\DWM",
+        )
+        value, _ = winreg.QueryValueEx(key, "AccentColor")
+        winreg.CloseKey(key)
+
+        b = (value >> 16) & 0xFF
+        g = (value >> 8) & 0xFF
+        r = value & 0xFF
+
+        from qfluentwidgets import setThemeColor
+        setThemeColor(f"#{r:02x}{g:02x}{b:02x}", save=False)
+    except Exception:
+        pass
+
+
 def parseRawHeader(header: str) -> dict[str, str]:
     dic: dict = {}
     for item in header.split('\n'):

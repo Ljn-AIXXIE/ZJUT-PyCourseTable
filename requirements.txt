@@ -4,3 +4,5 @@ lxml>=5.0
 PyQt6>=6.7
 PyQt6-WebEngine>=6.7
 qasync>=0.27
+PyQt6-Fluent-Widgets>=1.11
+PyQt6-Frameless-Window>=0.8
