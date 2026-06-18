@@ -139,15 +139,13 @@ class CourseTableWidget(QWidget):
         return self._refresh_btn
     
     def on_refresh_btn_click(self):
-        account: Account = Account.from_file('my_account.json')
-        api.run(account)
-        if account is not None:
-            self.set_table(CourseTableModel.from_dict(account['course_inf']))
-
+        import traceback
         try:
-            pass
+            account: Account = Account.from_file('my_account.json')
+            if api.run(account):
+                self.set_table(CourseTableModel.from_dict(account['course_inf']))
         except Exception:
-            pass
+            traceback.print_exc()
 
     def set_table(self, table: CourseTableModel):
         self._table = table

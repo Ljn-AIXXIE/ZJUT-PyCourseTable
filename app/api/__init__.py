@@ -200,10 +200,9 @@ def getCourseTable(account: Account, host: str = GDJWHost) -> bool:
     return True
 
 def run(account: Account, host: str = GDJWHost) -> bool:
-    able: bool
-    able = OAuthCasLogin(ac)
-    able = GDJWLogin(ac) if able else False
-    able = getCourseTable(ac) if able else False
+    able = OAuthCasLogin(account)
+    able = GDJWLogin(account) if able else False
+    able = getCourseTable(account) if able else False
     return able
 
 if __name__ == '__main__':
