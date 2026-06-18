@@ -15,9 +15,9 @@ def main():
 
     window = MainWindow()
 
-    # TODO: remove after debugging
-    from app.models.test_data import create_test_table
-    window.table_widget.set_table(create_test_table())
+    # # TODO: remove after debugging
+    # from app.models.test_data import create_test_table
+    # window.table_widget.set_table(create_test_table())
 
     window.show()
 

@@ -122,6 +122,7 @@ class CourseTableWidget(QWidget):
         self._last_refresh_label.setStyleSheet("color: gray; font-size: 14px;")
 
         self._refresh_btn = QPushButton("刷新课表")
+        self._refresh_btn.clicked.connect(self.on_refresh_btn_click)
 
         footer_layout.addWidget(self._refresh_btn)
         footer_layout.addStretch()
@@ -134,6 +135,10 @@ class CourseTableWidget(QWidget):
     @property
     def refresh_button(self) -> QPushButton:
         return self._refresh_btn
+    
+    def on_refresh_btn_click(self):
+        print("Test")
+        pass
 
     def set_table(self, table: CourseTableModel):
         self._table = table
