@@ -2,11 +2,11 @@ import json
 import pickle
 import os
 
-from app.utils import check_dir, encrypt_password
+from app.utils import check_dir, encrypt_password, _project_root
 
 
 class Account:
-    STORE_DIR: str = '../store'
+    STORE_DIR: str = os.path.join(_project_root, 'app/store')
 
     storeName: str
     _studentId: str
@@ -68,7 +68,7 @@ class Account:
     def to_json(self):
         check_dir(Account.STORE_DIR)
         with open(f'{Account.STORE_DIR}/{self.storeName}.json', 'w') as file:
-            json.dump(self._to_dict(), file, indent=2, ensure_ascii=False)
+            json.dump(self._to_dict(), file, indent=2)
 
     @classmethod
     def _from_dict(cls, data):

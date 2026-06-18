@@ -3,8 +3,71 @@ from bs4 import BeautifulSoup
 
 import app.utils as web_utils
 from app.account.account import Account
-from exception import WebException
-from stats import *
+
+class WebException(Exception):
+    def __init__(self, code):
+        self.code = code
+
+ZJUTHost = 'oauth.zjut.edu.cn'
+GDJWHost = 'www.gdjw.zjut.edu.cn'
+GDJWFixHost = 'www.gdjwjf.zjut.edu.cn'
+
+login_url = f'https://{ZJUTHost}/cas/login'
+publicKey_url = f'https://{ZJUTHost}/cas/v2/getPubKey'
+
+OAuthCasHeader = """
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+        Accept-Encoding: gzip, deflate, br, zstd
+        Accept-Language: zh-CN,zh;q=0.9
+        Cache-Control: max-age=0
+        Connection: keep-alive
+        Sec-Fetch-Dest: document
+        Sec-Fetch-Mode: navigate
+        Sec-Fetch-Site: none
+        Sec-Fetch-User: ?1
+        Upgrade-Insecure-Requests: 1
+"""
+PublicKeyHeader = """
+        Accept: application/json, text/javascript, */*; q=0.01
+        Accept-Encoding: gzip, deflate, br, zstd
+        Accept-Language: zh-CN,zh;q=0.9 
+        Connection: keep-alive
+        Sec-Fetch-Dest: empty
+        Sec-Fetch-Mode: cors
+        Sec-Fetch-Site: same-origin
+        X-Requested-With: XMLHttpRequest
+        """
+OAuthCasLoginHeader = """
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+        Accept-Encoding: gzip, deflate, br, zstd
+        Accept-Language: zh-CN,zh;q=0.9
+        Cache-Control: max-age=0
+        Connection: keep-alive
+        Content-Type: application/x-www-form-urlencoded
+        Origin: https://oauth.zjut.edu.cn
+        Sec-Fetch-Dest: document
+        Sec-Fetch-Mode: navigate
+        Sec-Fetch-Site: same-origin
+        Sec-Fetch-User: ?1
+        Upgrade-Insecure-Requests: 1
+        """
+
+GDJWBaseHeader = """
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+        Accept-Encoding: gzip, deflate
+        Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+        Cache-Control: max-age=0
+        Connection: keep-alive
+        Upgrade-Insecure-Requests: 1
+        """
+GDJWContentCourseBaseHeader = """
+        Accept: */*
+        Accept-Encoding: gzip, deflate
+        Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+        Connection: keep-alive
+        Content-Type: application/x-www-form-urlencoded;charset=UTF-8
+        X-Requested-With: XMLHttpRequest
+        """
 
 def OAuthCasLogin(account: Account, host: str = GDJWHost) -> bool:
     url = f'{login_url}?service=http%3A%2F%2F{host}%2Fsso%2Fzfiotlogin'
@@ -54,7 +117,7 @@ def OAuthCasLogin(account: Account, host: str = GDJWHost) -> bool:
     zfiotlogin_ticket_location = response.headers['Location']
     account['zfiotlogin_ticket_location'] = zfiotlogin_ticket_location
 
-    account.to_pkl()
+    account.to_json()
     return True
 
 def GDJWLogin(account: Account, host: str = GDJWHost) -> bool:
@@ -74,7 +137,7 @@ def GDJWLogin(account: Account, host: str = GDJWHost) -> bool:
         allow_redirects=False,
         headers=web_utils.parseRawHeader(f"""
             {GDJWBaseHeader}
-            Cookie: {sso_jsessionid}""")
+            Cookie: JSESSIONID={sso_jsessionid}""")
     )
     if response.status_code != 302: return False
     ticket_login_location = response.headers['Location']
@@ -102,7 +165,7 @@ def GDJWLogin(account: Account, host: str = GDJWHost) -> bool:
     index_initMenu_location = response.headers['Location']
     account['index_initMenu_location'] = index_initMenu_location
 
-    account.to_pkl()
+    account.to_json()
     return True
 
 def getCourseTable(account: Account, host: str = GDJWHost) -> bool:
@@ -131,17 +194,25 @@ def getCourseTable(account: Account, host: str = GDJWHost) -> bool:
         }
     )
     json = response.json()
-    account['kbList'] = json['kbList']
+    account['course_inf'] = json
 
-    account.to_pkl()
+    account.to_json()
     return True
+
+def run(account: Account, host: str = GDJWHost) -> bool:
+    able: bool
+    able = OAuthCasLogin(ac)
+    able = GDJWLogin(ac) if able else False
+    able = getCourseTable(ac) if able else False
+    return able
 
 if __name__ == '__main__':
     ac: Account = Account.from_file('my_account.json')
+    ac['acYear'] = '2025'
+    ac['acTerm'] = '1'
     print('\n', ac.studentId, ac.password)
 
-    # TODO
-    # isAble: bool
-    # isAble = OAuthCasLogin(ac)
-    # isAble = GDJWLogin(ac) if isAble else False
-    # isAble = getCourseTable(ac) if isAble else False
+    isAble: bool
+    isAble = OAuthCasLogin(ac)
+    isAble = GDJWLogin(ac) if isAble else False
+    isAble = getCourseTable(ac) if isAble else False

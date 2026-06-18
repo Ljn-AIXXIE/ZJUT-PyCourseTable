@@ -5,11 +5,13 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 
+from app.account.account import Account
 from app.models.course import (
     CourseModel, CourseTableModel, CourseGraphicObject,
     create_course_graphics_of_day, BASE_HEIGHT
 )
 from app.utils import get_settings
+import app.api as api
 
 DAYS_IN_WEEK = ["一", "二", "三", "四", "五", "六", "日"]
 
@@ -137,8 +139,15 @@ class CourseTableWidget(QWidget):
         return self._refresh_btn
     
     def on_refresh_btn_click(self):
-        print("Test")
-        pass
+        account: Account = Account.from_file('my_account.json')
+        api.run(account)
+        if account is not None:
+            self.set_table(CourseTableModel.from_dict(account['course_inf']))
+
+        try:
+            pass
+        except Exception:
+            pass
 
     def set_table(self, table: CourseTableModel):
         self._table = table
