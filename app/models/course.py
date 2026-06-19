@@ -1,5 +1,8 @@
 from dataclasses import dataclass, field
+
 from PyQt6.QtGui import QColor
+
+from app.utils import parse_course_week
 
 
 COLORS: list[QColor] = [
@@ -25,6 +28,7 @@ class CourseModel:
     class_type: str = ""          # kclb
     score: str = ""               # xf
     total_hours: str = ""         # kczxs
+    week_range: str = ""          # zcd
     teacher_name: str = ""        # xm
     campus: str = ""              # xqmc
 
@@ -41,6 +45,7 @@ class CourseModel:
             class_type=data.get("kclb", ""),
             score=str(data.get("xf", "")),
             total_hours=str(data.get("kczxs", "")),
+            week_range=data.get("zcd", ""),
             teacher_name=data.get("xm", ""),
             campus=data.get("xqmc", ""),
         )
@@ -69,6 +74,19 @@ class CourseTableModel:
             end_date=end_date,
             courses=courses,
             week_time=week_time,
+        )
+
+    def for_week(self, ac_week: int) -> "CourseTableModel":
+        filtered = [
+            c for c in self.courses
+            if ac_week in parse_course_week(c.week_range)
+        ]
+        return CourseTableModel(
+            begin_date=self.begin_date,
+            end_date=self.end_date,
+            courses=filtered,
+            week_time=ac_week,
+            year_time=self.year_time,
         )
 
 

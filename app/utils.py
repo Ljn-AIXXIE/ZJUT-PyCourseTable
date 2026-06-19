@@ -1,17 +1,7 @@
 import datetime
 import os
 
-import os
-from PyQt6.QtCore import QSettings
-
-_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-def get_settings() -> QSettings:
-    return QSettings(
-        os.path.join(_project_root, "settings.ini"),
-        QSettings.Format.IniFormat,
-    )
-
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def apply_system_accent_color():
     """Apply the Windows system accent color to Fluent widgets."""
@@ -32,7 +22,6 @@ def apply_system_accent_color():
         setThemeColor(f"#{r:02x}{g:02x}{b:02x}", save=False)
     except Exception:
         pass
-
 
 def parseRawHeader(header: str) -> dict[str, str]:
     dic: dict = {}
@@ -71,11 +60,6 @@ def encrypt_password(password: str, exponent_hex: str, modulus_hex: str) -> str:
         parts.append(f"{encrypted:x}")
 
     return " ".join(parts)
-
-def check_dir(path: str):
-    if not os.path.exists(path):
-        os.makedirs(path)
-
 
 def parse_course_week(zcd: str) -> set[int]:
     _zcd = zcd.replace("周", "")

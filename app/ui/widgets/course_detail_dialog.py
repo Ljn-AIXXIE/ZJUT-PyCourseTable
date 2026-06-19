@@ -1,28 +1,23 @@
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QLabel, QVBoxLayout
+from PyQt6.QtWidgets import QLabel
 
 from qfluentwidgets import MessageBoxBase
-
 from app.models.course import CourseModel
 
-
 def _section_label(text: str) -> QLabel:
-    lbl = QLabel(text)
     font = QFont()
     font.setPixelSize(14)
     font.setWeight(QFont.Weight.DemiBold)
+    lbl = QLabel(text)
     lbl.setFont(font)
     lbl.setContentsMargins(0, 8, 0, 2)
     return lbl
-
 
 def _value_label(text: str) -> QLabel:
     lbl = QLabel(text)
     lbl.setStyleSheet("font-size: 13px;")
     lbl.setContentsMargins(8, 0, 0, 0)
     return lbl
-
 
 class CourseDetailDialog(MessageBoxBase):
     def __init__(self, course: CourseModel, parent=None):
@@ -33,12 +28,8 @@ class CourseDetailDialog(MessageBoxBase):
         self.yesButton.setText("确定")
 
         self.viewLayout.addWidget(_section_label("时间地点"))
-        self.viewLayout.addWidget(_value_label(
-            f"时间  {course.name_of_day_of_week} {course.time_of_day} 节"
-        ))
-        self.viewLayout.addWidget(_value_label(
-            f"地点  {course.campus} {course.place}"
-        ))
+        self.viewLayout.addWidget(_value_label(f"时间  {course.name_of_day_of_week} {course.time_of_day} 节"))
+        self.viewLayout.addWidget(_value_label(f"地点  {course.campus} {course.place}"))
 
         self.viewLayout.addSpacing(8)
         self.viewLayout.addWidget(_section_label("课程信息"))

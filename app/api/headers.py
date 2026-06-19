@@ -1,6 +1,5 @@
 ZJUTHost = 'oauth.zjut.edu.cn'
 GDJWHost = 'www.gdjw.zjut.edu.cn'
-GDJWFixHost = 'www.gdjwjf.zjut.edu.cn'
 
 login_url = f'https://{ZJUTHost}/cas/login'
 publicKey_url = f'https://{ZJUTHost}/cas/v2/getPubKey'
