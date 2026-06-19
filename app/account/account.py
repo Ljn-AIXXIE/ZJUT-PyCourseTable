@@ -9,14 +9,16 @@ class Account:
     STORE_DIR: str = os.path.join(_project_root, 'app/store')
 
     storeName: str
+    storeType: str
+
     _studentId: str
     _password: str
     _store: dict
 
     _type: str
 
-    def __init__(self, storeName, studentId, password):
-        self.storeName = storeName
+    def __init__(self, storePath: str, studentId: str, password: str):
+        self.storeName, self.storeType = storePath.split('.', maxsplit=1)
         self._studentId = studentId
         self._password = password
         self._store = {}
@@ -56,6 +58,7 @@ class Account:
     def _to_dict(self):
         return {
             'storeName': self.storeName,
+            'storeType': self.storeType,
             'studentId': self.studentId,
             'password': self.password,
             '_store': self._store
@@ -73,14 +76,25 @@ class Account:
     @classmethod
     def _from_dict(cls, data):
         store_name = data['storeName']
+        store_type = data['storeType']
         student_id = data['studentId']
         password = data['password']
-        account = cls(store_name, student_id, password)
+        account = cls(f'{store_name}.{store_type}', student_id, password)
         account._store = data.get('_store', {})
         return account
 
+    def save(self):
+        check_dir(Account.STORE_DIR)
+        if self.storeType == 'pkl':
+            with open(f'{Account.STORE_DIR}/{self.storeName}.{self.storeType}', 'wb') as file:
+                pickle.dump(self, file)
+        elif self.storeType == 'json':
+            with open(f'{Account.STORE_DIR}/{self.storeName}.{self.storeType}', 'w') as file:
+                json.dump(self._to_dict(), file, indent=2)
+
     @staticmethod
     def from_file(fileName: str):
+        check_dir(Account.STORE_DIR)
         path = f'{Account.STORE_DIR}/{fileName}'
         if not os.path.exists(path):
             raise FileNotFoundError(f"JSON file {path} not found")
@@ -96,8 +110,9 @@ class Account:
 
     @staticmethod
     def delete(fileName: str):
+        check_dir(Account.STORE_DIR)
         path: str = f'{Account.STORE_DIR}/{fileName}'
-
         if not os.path.exists(path):
             raise FileNotFoundError(f"JSON file {path} not found")
+
         os.remove(path)

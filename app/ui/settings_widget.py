@@ -94,6 +94,13 @@ class SettingsWidget(QScrollArea):
     def save(self):
         self._settings.setValue("studentId", self.export_student_id_card.text)
         self._settings.setValue("password", self.export_password_card.text)
+
+        from app.account.account import Account
+        account: Account = Account.from_file('my_account.json')
+        account._studentId = self.export_student_id_card.text
+        account._password = self.export_password_card.text
+        account.to_json()
+
         self._settings.setValue(
             "showWeekendCourses",
             "true" if self.show_weekend_card.switchButton.isChecked() else "false",

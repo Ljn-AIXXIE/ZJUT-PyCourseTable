@@ -1,3 +1,4 @@
+import datetime
 import os
 
 import os
@@ -74,3 +75,21 @@ def encrypt_password(password: str, exponent_hex: str, modulus_hex: str) -> str:
 def check_dir(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def parse_course_week(zcd: str) -> set[int]:
+    _zcd = zcd.replace("周", "")
+    s: set[int] = set()
+    for part in _zcd.split(","):
+        if '-' in part:
+            ranges: list[str] = part.split('-')
+            for num in range(int(ranges[0]), int(ranges[1]) + 1):
+                s.add(num)
+        else:
+            s.add(int(part))
+    return s
+
+def parse_course_date(first_date: str, acWeek: int, week: int) -> str:
+    dt: datetime.datetime = datetime.datetime.strptime(first_date, "%Y-%m-%d")
+    dt = dt + datetime.timedelta(days=7*(acWeek-1)) + datetime.timedelta(days=week-1)
+    return dt.strftime("%Y-%m-%d")

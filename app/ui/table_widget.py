@@ -11,7 +11,6 @@ from app.models.course import (
     create_course_graphics_of_day, BASE_HEIGHT
 )
 from app.utils import get_settings
-import app.api as api
 
 DAYS_IN_WEEK = ["一", "二", "三", "四", "五", "六", "日"]
 
@@ -69,6 +68,7 @@ class _DayColumn(QWidget):
     def __init__(self, day_index: int, table: CourseTableModel, color_dict: dict, parent=None):
         super().__init__(parent)
         self.setMinimumWidth(48)
+        self.setMaximumWidth(108)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(2, 0, 2, 0)
@@ -141,6 +141,7 @@ class CourseTableWidget(QWidget):
     def on_refresh_btn_click(self):
         import traceback
         try:
+            import app.api.index as api
             account: Account = Account.from_file('my_account.json')
             if api.run(account):
                 self.set_table(CourseTableModel.from_dict(account['course_inf']))

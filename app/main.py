@@ -15,9 +15,15 @@ def main():
 
     window = MainWindow()
 
-    # # TODO: remove after debugging
-    # from app.models.test_data import create_test_table
-    # window.table_widget.set_table(create_test_table())
+    import traceback
+    try:
+        from app.account.account import Account
+        from app.models.course import CourseTableModel
+        account: Account = Account.from_file('my_account.json')
+
+        window.table_widget.set_table(CourseTableModel.from_dict(account['course_inf']))
+    except Exception:
+        traceback.print_exc()
 
     window.show()
 
