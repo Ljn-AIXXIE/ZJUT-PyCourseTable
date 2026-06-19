@@ -220,4 +220,4 @@ __marimo__/
 
 # Store
 #   self inf store
-store/*
+/app/store
