@@ -22,8 +22,8 @@ def load_cache() -> tuple[bool, dict]:
     except (json.JSONDecodeError, OSError):
         return False, {}
 
-    if "course_inf" not in cache:
-        return False, {}
+    if "jwglxt_jsessionid" not in cache or "base_route" not in cache:
+        return False, cache
 
     return True, cache
 
@@ -201,22 +201,129 @@ def _get_course_first_date(cache: dict, host: str = GDJWHost):
         raise ApiError("获取学期首日失败，教务系统返回数据异常")
 
 
-def run():
-    cache: dict = {}
+def _get_exam_info(cache: dict, host: str = GDJWHost):
+    xnm, xqm = _resolve_semester()
 
+    response = requests.post(
+        f"http://{host}/jwglxt/kwgl/kscx_cxXsksxxIndex.html?doType=query&gnmkdm=N358105",
+        allow_redirects=False,
+        headers=parseRawHeader(
+            f"""
+            {GDJWExamQueryHeader}
+            Origin: http://{host}
+            Referer: http://{host}/jwglxt/kwgl/kscx_cxXsksxxIndex.html?gnmkdm=N358105&layout=default
+            Cookie: JSESSIONID={cache['jwglxt_jsessionid']}; route={cache['base_route']}"""
+        ),
+        data={"xnm": xnm, "xqm": xqm},
+    )
+    json_data = response.json()
+    cache["exam_inf"] = json_data
+
+
+def _get_grade_info(cache: dict, host: str = GDJWHost):
+    xnm, xqm = _resolve_semester()
+
+    response = requests.post(
+        f"http://{host}/jwglxt/cjcx/cjcx_cxXsgrcj.html?doType=query&gnmkdm=N305005",
+        allow_redirects=False,
+        headers=parseRawHeader(
+            f"""
+            {GDJWGradeQueryHeader}
+            Origin: http://{host}
+            Referer: http://{host}/jwglxt/cjcx/cjcx_cxDgXscj.html?gnmkdm=N305005&layout=default
+            Cookie: JSESSIONID={cache['jwglxt_jsessionid']}; route={cache['base_route']}"""
+        ),
+        data={"xnm": xnm, "xqm": xqm},
+    )
+    json_data = response.json()
+    cache["grade_inf"] = json_data
+
+
+def _login(cache: dict | None = None):
+    if cache is None:
+        cache = {}
     _oauth_cas_login(cache)
     _gdjw_login(cache)
-    _get_course_table(cache)
-    _get_course_first_date(cache)
-
     save_cache(cache)
+    return cache
 
 
-async def run_async() -> tuple[bool, Exception | None]:
+def _fetch_course_table():
+    ok, cache = load_cache()
+
+    try:
+        _get_course_table(cache)
+        _get_course_first_date(cache)
+        save_cache(cache)
+    except Exception:
+        cache = _login()
+        _get_course_table(cache)
+        _get_course_first_date(cache)
+        save_cache(cache)
+
+
+def _fetch_exam_info():
+    ok, cache = load_cache()
+
+    try:
+        _get_exam_info(cache)
+        save_cache(cache)
+    except Exception:
+        cache = _login()
+        _get_exam_info(cache)
+        save_cache(cache)
+
+
+async def login_async() -> tuple[bool, Exception | None]:
     import asyncio
     import traceback
     try:
-        await asyncio.to_thread(run)
+        await asyncio.to_thread(_login)
+        return True, None
+    except Exception as e:
+        e.traceback_str = traceback.format_exc()
+        return False, e
+
+
+async def fetch_course_table_async() -> tuple[bool, Exception | None]:
+    import asyncio
+    import traceback
+    try:
+        await asyncio.to_thread(_fetch_course_table)
+        return True, None
+    except Exception as e:
+        e.traceback_str = traceback.format_exc()
+        return False, e
+
+
+async def fetch_exam_info_async() -> tuple[bool, Exception | None]:
+    import asyncio
+    import traceback
+    try:
+        await asyncio.to_thread(_fetch_exam_info)
+        return True, None
+    except Exception as e:
+        e.traceback_str = traceback.format_exc()
+        return False, e
+
+
+def _fetch_grade_info():
+    ok, cache = load_cache()
+
+    try:
+        _get_grade_info(cache)
+        save_cache(cache)
+    except Exception:
+        cache = _login()
+        _get_grade_info(cache)
+        save_cache(cache)
+
+
+async def fetch_grade_info_async() -> tuple[bool, Exception | None]:
+    import asyncio
+    import traceback
+    try:
+        await asyncio.to_thread(_fetch_grade_info)
         return True, None
     except Exception as e:
         e.traceback_str = traceback.format_exc()

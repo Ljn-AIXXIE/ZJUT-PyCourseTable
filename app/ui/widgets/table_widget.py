@@ -113,7 +113,7 @@ class CourseTableWidget(QWidget):
 
         if app.settings.get().value("autoRefresh") == "true":
             from PyQt6.QtCore import QTimer
-            QTimer.singleShot(0, lambda: asyncio.ensure_future(self._do_auto_refresh()))
+            QTimer.singleShot(0, self._start_auto_refresh)
 
     def _build_ui(self):
         self.setStyleSheet("background: transparent;")
@@ -167,7 +167,7 @@ class CourseTableWidget(QWidget):
 
     def _init_from_cache(self):
         ok, cache = api.load_cache()
-        if ok:
+        if ok and "course_inf" in cache:
             self._set_table(
                 CourseTableModel.from_dict(cache["course_inf"]),
                 cache.get("first_date", ""),
@@ -175,75 +175,79 @@ class CourseTableWidget(QWidget):
 
     def _on_refresh_clicked(self):
         btn = self.sender()
-        asyncio.ensure_future(self._do_refresh(btn))
+        btn.setEnabled(False)
 
-    async def _do_refresh(self, refresh_btn):
-        refresh_btn.setEnabled(False)
         dialog = MessageBox("提示", "正在刷新课表...", self.window())
         dialog.yesButton.setEnabled(False)
-        dialog.hideCancelButton()
+        dialog.cancelButton.setEnabled(False)
         dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
         dialog.show()
 
-        ok, err = await api.run_async()
+        async def do_refresh():
+            return await api.fetch_course_table_async()
 
-        if not ok:
-            dialog.contentLabel.setText(err.traceback_str)
-            dialog.yesButton.setEnabled(True)
-        else:
+        def on_done(task):
+            ok, err = task.result()
+            btn.setEnabled(True)
+
+            if err is not None:
+                dialog.contentLabel.setText(err.traceback_str)
+                dialog.yesButton.setEnabled(True)
+                InfoBar.error(
+                    title="刷新失败",
+                    content=str(err),
+                    duration=5000,
+                    position=InfoBarPosition.TOP,
+                    parent=self.window(),
+                )
+                return
+
+            if not ok:
+                dialog.contentLabel.setText("登录或获取课表数据失败，请检查学号和密码")
+                dialog.yesButton.setEnabled(True)
+                return
+
             dialog.close()
-        
-        refresh_btn.setEnabled(True)
 
-        if err is not None:
-            InfoBar.error(
-                title="刷新失败",
-                content=str(err),
-                duration=5000,
-                position=InfoBarPosition.TOP,
-                parent=self.window(),
-            )
-            return
-
-        if not ok:
-            InfoBar.error(
-                title="刷新失败",
-                content="登录或获取课表数据失败，请检查学号和密码",
-                duration=5000,
-                position=InfoBarPosition.TOP,
-                parent=self.window(),
-            )
-            return
-
-        ok2, cache = api.load_cache()
-        if ok2:
-            self._set_table(
-                CourseTableModel.from_dict(cache["course_inf"]),
-                cache.get("first_date", ""),
-            )
-            self._rebuild_grid()
-
-    async def _do_auto_refresh(self):
-        ok, err = await api.run_async()
-        if err is not None:
-            InfoBar.error(
-                title="自动刷新失败",
-                content=str(err),
-                duration=5000,
-                position=InfoBarPosition.TOP,
-                parent=self.window(),
-            )
-            return
-        if not ok:
-            return
-        ok2, cache = api.load_cache()
-        if ok2:
-            self._set_table(
-                CourseTableModel.from_dict(cache["course_inf"]),
-                cache.get("first_date", ""),
-            )
-            if self.isVisible():
+            ok2, cache = api.load_cache()
+            if ok2:
+                self._set_table(
+                    CourseTableModel.from_dict(cache["course_inf"]),
+                    cache.get("first_date", ""),
+                )
                 self._rebuild_grid()
+
+        task = asyncio.ensure_future(do_refresh())
+        task.add_done_callback(on_done)
+
+    def _start_auto_refresh(self):
+        async def do_refresh():
+            return await api.fetch_course_table_async()
+
+        def on_done(task):
+            ok, err = task.result()
+            if err is not None:
+                InfoBar.error(
+                    title="自动刷新失败",
+                    content=str(err),
+                    duration=5000,
+                    position=InfoBarPosition.TOP,
+                    parent=self.window(),
+                )
+                return
+            if not ok:
+                return
+            ok2, cache = api.load_cache()
+            if ok2:
+                self._set_table(
+                    CourseTableModel.from_dict(cache["course_inf"]),
+                    cache.get("first_date", ""),
+                )
+                if self.isVisible():
+                    self._rebuild_grid()
+
+        task = asyncio.ensure_future(do_refresh())
+        task.add_done_callback(on_done)
 
     def showEvent(self, event):
         super().showEvent(event)
